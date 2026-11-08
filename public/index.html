@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dar Tétouan – Restaurant</title>
+<style>
+:root{--bg:#fffaf3;--card:#fff;--text:#2b1d14;--muted:#7a6a5d;--accent:#c2410c;--line:#eadfce}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,serif;line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+nav{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;padding:18px 24px;font-family:system-ui,sans-serif}
+nav .logo{font-family:Georgia,serif;font-size:24px;font-weight:700;color:#fff}
+nav a{color:#fff;text-decoration:none;margin-left:18px;font-size:15px}
+/* Hero: 7ot tswira 7qiqiya f images/hero.jpg */
+.hero{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:90px 20px 60px;
+ background:linear-gradient(rgba(20,10,5,.55),rgba(20,10,5,.55)),url('/images/hero.jpg') center/cover,linear-gradient(135deg,#7c2d12,#c2410c)}
+.hero h1{font-size:clamp(38px,7vw,68px);margin:0 0 12px;line-height:1.1}
+.hero p{font-size:19px;max-width:520px;margin:0 auto 26px;opacity:.92}
+.btn{display:inline-block;background:var(--accent);color:#fff;border:0;padding:13px 28px;border-radius:999px;text-decoration:none;font:600 16px system-ui,sans-serif;cursor:pointer}
+h2{font-size:32px;text-align:center;margin:60px 0 24px}
+h3.cat{font-size:22px;color:var(--accent);margin:30px 0 14px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.dish{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.dish img{width:100%;height:170px;object-fit:cover;display:block}
+.dish .t{padding:16px}
+.dish h4{margin:0 0 4px;font-size:19px}
+.dish p{margin:0 0 10px;color:var(--muted);font:14px system-ui,sans-serif}
+.price{color:var(--accent);font:700 16px system-ui,sans-serif}
+form{max-width:520px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;display:grid;gap:12px;font-family:system-ui,sans-serif}
+form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-size:14px;color:var(--muted)}
+input,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit;margin-top:4px;background:var(--bg);color:var(--text)}
+#msg{text-align:center;font-weight:600}
+footer{text-align:center;color:var(--muted);padding:50px 0 30px;font:14px system-ui,sans-serif}
+</style>
+</head>
+<body>
+<nav><div class="logo">Dar Tétouan</div><div><a href="#menu">Menu</a><a href="#reserver">Réserver</a></div></nav>
+<section class="hero"><div>
+  <h1>La vraie cuisine<br>de Tétouan</h1>
+  <p>Tajines, pastilla et thé à la menthe, préparés chaque jour avec amour.</p>
+  <a class="btn" href="#reserver">Réserver une table</a>
+</div></section>
+<div class="wrap">
+  <h2 id="menu">Notre menu</h2>
+  <div id="menuBox">Chargement…</div>
+  <h2 id="reserver">Réserver une table</h2>
+  <form id="resForm">
+    <label>Nom<input name="name" required></label>
+    <label>Téléphone<input name="phone" type="tel" required></label>
+    <div class="row">
+      <label>Date<input name="date" type="date" required></label>
+      <label>Heure<input name="time" type="time" required></label>
+    </div>
+    <label>Nombre de personnes<input name="guests" type="number" min="1" max="20" value="2" required></label>
+    <label>Remarque (optionnel)<textarea name="note" rows="2"></textarea></label>
+    <button class="btn" type="submit">Envoyer la réservation</button>
+    <div id="msg"></div>
+  </form>
+  <footer>📍 Centre-ville, Tétouan · 🕒 12h – 23h · Site de démonstration réalisé par Jassir</footer>
+</div>
+<script>
+async function loadMenu(){
+  const rows = await (await fetch('/api/menu')).json();
+  const cats = {};
+  rows.forEach(r => (cats[r.category] ||= []).push(r));
+  document.getElementById('menuBox').innerHTML = Object.entries(cats).map(([c, dishes]) =>
+    `<h3 class="cat">${c}</h3><div class="grid">` + dishes.map(d =>
+      `<div class="dish"><img src="${d.image}" alt="${d.name}"><div class="t"><h4>${d.name}</h4><p>${d.description}</p><span class="price">${d.price} DH</span></div></div>`
+    ).join('') + `</div>`).join('');
+}
+document.getElementById('resForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('msg');
+  const res = await fetch('/api/reservations', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.fromEntries(new FormData(e.target)))});
+  const data = await res.json();
+  msg.style.color = res.ok ? 'green' : 'crimson';
+  msg.textContent = res.ok ? 'Merci ! Votre réservation est enregistrée ✅' : (data.error || 'Erreur');
+  if (res.ok) e.target.reset();
+});
+loadMenu();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin – Réservations</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:900px;margin:30px auto;padding:0 16px;color:#2b1d14}
+input,button{padding:10px;font:inherit} button{cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:20px;display:block;overflow-x:auto}
+th,td{border-bottom:1px solid #eadfce;padding:10px;text-align:left;white-space:nowrap}
+</style></head><body>
+<h1>Réservations</h1>
+<input id="pw" type="password" placeholder="Password"> <button onclick="load()">Entrer</button>
+<div id="out"></div>
+<script>
+async function load(){
+  const pw = document.getElementById('pw').value;
+  const r = await fetch('/api/admin/reservations',{headers:{'x-admin-password':pw}});
+  const out = document.getElementById('out');
+  if(!r.ok){ out.textContent = 'Password ghalat'; return; }
+  const rows = await r.json();
+  out.innerHTML = rows.length ? '<table><tr><th>Nom</th><th>Tél</th><th>Date</th><th>Heure</th><th>Pers.</th><th>Note</th><th></th></tr>' +
+   rows.map(x=>`<tr><td>${x.name}</td><td>${x.phone}</td><td>${x.date}</td><td>${x.time}</td><td>${x.guests}</td><td>${x.note||''}</td><td><button onclick="del(${x.id})">Supprimer</button></td></tr>`).join('') + '</table>' : '<p>Majat 7ta réservation.</p>';
+}
+async function del(id){
+  await fetch('/api/admin/reservations/'+id,{method:'DELETE',headers:{'x-admin-password':document.getElementById('pw').value}});
+  load();
+}
+</script></body></html>
